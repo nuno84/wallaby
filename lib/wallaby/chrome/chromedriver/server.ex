@@ -167,21 +167,11 @@ defmodule Wallaby.Chrome.Chromedriver.Server do
   @spec open_chromedriver_port(String.t(), port_number) :: port
   defp open_chromedriver_port(chromedriver_path, port_number) when is_binary(chromedriver_path) do
     case :os.type() do
-      # relative symlink on Windows are broken, see symlink_or_copy/2
       {:win32, _} ->
-        Port.open({:spawn_executable, 'c:/windows/system32/cmd.exe'},
-          [:binary, :stream, :hide, :use_stdio, :stderr_to_stdout, :exit_status, {:args, ["/c", chromedriver_path, "--log-level=OFF", port_number]}]
-          )
-
+        Port.open({:spawn_executable, 'c:/windows/system32/cmd.exe'}, port_opts(chromedriver_path, port_number))
       _ ->
-            Port.open(
-                  {:spawn_executable, to_charlist(wrapper_script())},
-                  port_opts(chromedriver_path, port_number)
-                )
+            Port.open({:spawn_executable, to_charlist(wrapper_script())},port_opts(chromedriver_path, port_number))
     end
-
-
-
   end
 
   @spec analyze_output(String.t()) :: {:os_pid, os_pid} | :unknown
@@ -207,16 +197,28 @@ defmodule Wallaby.Chrome.Chromedriver.Server do
       "--port=#{port}"
     ]
 
-  defp port_opts(chromedriver, tcp_port),
-    do: [
-      :binary,
-      :stream,
-      :use_stdio,
-      :stderr_to_stdout,
-      :exit_status,
-      args: args(chromedriver, tcp_port)
-    ]
-
+  defp port_opts(chromedriver, tcp_port) do
+      case :os.type() do
+      {:win32, _} ->
+            [
+                :binary,
+                :stream,
+                :hide, #Needed for windows cmd
+                :use_stdio,
+                :stderr_to_stdout,
+                :exit_status,
+                args: args(chromedriver, tcp_port)
+              ]
+      _ ->
+            [
+                :binary,
+                :stream,
+                :use_stdio,
+                :stderr_to_stdout,
+                :exit_status,
+                args: args(chromedriver, tcp_port)
+              ]
+  end
   defp check_readiness_async(port_number) do
     process_to_notify = self()
     base_url = build_base_url(port_number)
