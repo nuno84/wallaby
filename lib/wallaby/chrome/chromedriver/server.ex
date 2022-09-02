@@ -209,7 +209,7 @@ defmodule Wallaby.Chrome.Chromedriver.Server do
                 :use_stdio,
                 :stderr_to_stdout,
                 :exit_status,
-                args: args(chromedriver, tcp_port)
+                args: args("/c", chromedriver, tcp_port)
               ]
       _ ->
             [
