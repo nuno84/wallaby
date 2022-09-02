@@ -192,13 +192,13 @@ defmodule Wallaby.Chrome.Chromedriver.Server do
     Path.absname("priv/run_command.sh", Application.app_dir(:wallaby))
   end
 
-  defp args(chromedriver, port),
-    do: [
-      chromedriver,
-      "--log-level=OFF",
-      "--port=#{port}"
-    ]
-
+  defp args(chromedriver, port) do
+    case :os.type() do
+      {:win32, _} -> ["/c", chromedriver, "--log-level=OFF", "--port=#{port}" ]
+      _ -> [ chromedriver, "--log-level=OFF", "--port=#{port}" ]
+    end
+  end
+  
   defp port_opts(chromedriver, tcp_port) do
       case :os.type() do
       {:win32, _} ->
@@ -209,7 +209,7 @@ defmodule Wallaby.Chrome.Chromedriver.Server do
                 :use_stdio,
                 :stderr_to_stdout,
                 :exit_status,
-                args: args("/c", chromedriver, tcp_port)
+                args: args(chromedriver, tcp_port)
               ]
       _ ->
             [
