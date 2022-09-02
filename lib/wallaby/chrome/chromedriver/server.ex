@@ -218,6 +218,7 @@ defmodule Wallaby.Chrome.Chromedriver.Server do
                 :exit_status,
                 args: args(chromedriver, tcp_port)
               ]
+      end
   end
   defp check_readiness_async(port_number) do
     process_to_notify = self()
