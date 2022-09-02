@@ -166,10 +166,22 @@ defmodule Wallaby.Chrome.Chromedriver.Server do
 
   @spec open_chromedriver_port(String.t(), port_number) :: port
   defp open_chromedriver_port(chromedriver_path, port_number) when is_binary(chromedriver_path) do
-    Port.open(
-      {:spawn_executable, to_charlist(wrapper_script())},
-      port_opts(chromedriver_path, port_number)
-    )
+    case :os.type() do
+      # relative symlink on Windows are broken, see symlink_or_copy/2
+      {:win32, _} ->
+        Port.open({:spawn_executable, 'c:/windows/system32/cmd.exe'},
+          [:binary, :stream, :hide, :use_stdio, :stderr_to_stdout, :exit_status, {:args, ["/c", chromedriver_path, "--log-level=OFF", port_number]}]
+          )
+
+      _ ->
+            Port.open(
+                  {:spawn_executable, to_charlist(wrapper_script())},
+                  port_opts(chromedriver_path, port_number)
+                )
+    end
+
+
+
   end
 
   @spec analyze_output(String.t()) :: {:os_pid, os_pid} | :unknown
